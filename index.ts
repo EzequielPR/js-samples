@@ -6,11 +6,26 @@
 
 let map: google.maps.Map;
 
+const home = { lat: 18.9282, lng: -70.4149 };
+
 function initMap(): void {
-  map = new google.maps.Map(document.getElementById("map") as HTMLElement, {
-    center: { lat: -34.397, lng: 150.644 },
-    zoom: 8,
+  const mapEl = document.getElementById("map")!;
+
+  map = new google.maps.Map(mapEl, {
+    center: home,
+    zoom: 20
   });
+
+  for (let y = -0.001; y <= 0.001; y += 0.0001) {
+    for (let x = -0.001; x <= 0.001; x += 0.0001) {
+      
+      const marker = new google.maps.Marker({
+        position: { lat: home.lat + y, lng: home.lng + x },
+        map: map,
+      });
+
+    }
+  }
 }
 
 declare global {
