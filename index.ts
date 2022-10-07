@@ -1,5 +1,5 @@
-import { algoDistanceThreshold, algoHeadingDifference, algoDistancePreviousPosition, algoPreviousZone } from "./algorithms";
-import { getDistance, getDistanceSimple } from "./utils";
+import { algoDistanceThreshold, algoHeadingDifference, algoDistancePreviousPosition, algoPreviousZone, algoPreviousHeadingDifference } from "./algorithms";
+import { getBearing, getDistance, getDistanceSimple } from "./utils";
 
 const mapEl = document.getElementById("map")!;
 const inputEl = document.querySelector('input')!;
@@ -62,9 +62,11 @@ function addLine(positions: google.maps.LatLngLiteral[], optimize = false): void
       ['algoPreviousZone', preOp],
       ['algoDistanceThreshold', algoDistanceThreshold(positions)],
       ['algoHeadingDifference', algoHeadingDifference(positions)],
+      ['algoPreviousHeadingDifference', algoPreviousHeadingDifference(positions)],
       ['algoPreviousDistance', algoDistancePreviousPosition(positions)],
       ['preOP-algoDistanceThreshold', algoDistanceThreshold(preOp)],
       ['preOP-algoHeadingDifference', algoHeadingDifference(preOp)],
+      ['preOP-algoPreviousHeadingDifference', algoPreviousHeadingDifference(preOp)],
       ['preOP-algoPreviousDistance', algoDistancePreviousPosition(preOp)],
     ];
 
@@ -75,7 +77,7 @@ function addLine(positions: google.maps.LatLngLiteral[], optimize = false): void
       console.log(`${name}:\n${op.length} / ${positions.length} = ${percentage}%`);
     });
 
-    const optimizedPositions = ops.find(x => x[0] === 'preOP-algoHeadingDifference')![1];
+    const optimizedPositions = ops[ops.length - 2][1];
 
     const optimizedLine = new google.maps.Polyline({
       path: optimizedPositions,
@@ -85,10 +87,6 @@ function addLine(positions: google.maps.LatLngLiteral[], optimize = false): void
       strokeWeight: 2,
     });
     optimizedLine.setMap(map);
-
-    // for (const position of optimizedPositions) {
-    //   const marker = new google.maps.Marker({ position, map });
-    // }
 
     localStorage.setItem(
       'HMR_positions', 
@@ -113,8 +111,22 @@ function addLine(positions: google.maps.LatLngLiteral[], optimize = false): void
     });
     optimizedLine.setMap(map);
 
-    for (const position of positions) {
-      const marker = new google.maps.Marker({ position, map, title: position.lat + ', ' + position.lng });
+    const initial = new google.maps.Marker({ 
+      position: optimizedPositions[0], map, 
+      title: optimizedPositions[0].lat + ', ' + optimizedPositions[0].lng 
+    }); 
+    let previous = 0;
+    for (let i = 1; i < optimizedPositions.length; i++) {
+
+      const [ c1, c2 ] = optimizedPositions.slice(i - 1, i + 1);
+      const heading = getBearing([c1.lat, c1.lng], [c2.lat, c2.lng]);
+      
+      const marker = new google.maps.Marker({ 
+        position: c2, map, 
+        title: c2.lat + ', ' + c2.lng + '\n' + Math.round(heading) + ' ' + Math.abs(heading - previous)
+      }); 
+
+      previous = heading;
     }
   }
 }

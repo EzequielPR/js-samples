@@ -82,11 +82,37 @@ export function algoHeadingDifference(
       const heading = getBearing([c1.lat, c1.lng], [c2.lat, c2.lng]);
       const diff = Math.abs(heading - previousHeading);
 
-      console.log(c2.lat + ', ' + c2.lng, diff);
-
       if (diff >= degrees) {
         optimizedPositions.push(c2);
         previousHeading = heading;
+      }
+    }
+
+    if (optimizedPositions.at(-1) !== positions.at(-1)) {
+      optimizedPositions.push(positions.at(-1)!);
+    }
+
+    return optimizedPositions;
+}
+
+/** Salta la ubicacion si no se ha cambiado de direccion lo suficiente comparada a la anterior */
+export function algoPreviousHeadingDifference(
+    positions: google.maps.LatLngLiteral[], 
+    degrees = 10,
+): google.maps.LatLngLiteral[] {
+    
+    const optimizedPositions: google.maps.LatLngLiteral[] = [positions[0], positions[1]];
+
+    for (let i = 2; i < positions.length; i++) {
+
+      const [ c1, c2, c3 ] = positions.slice(i - 2, i + 1);
+
+      const heading1 = getBearing([c1.lat, c1.lng], [c2.lat, c2.lng]);
+      const heading2 = getBearing([c2.lat, c2.lng], [c3.lat, c3.lng]);
+      const diff = Math.abs(heading2 - heading1);
+
+      if (diff >= degrees) {
+        optimizedPositions.push(c3);
       }
     }
 
